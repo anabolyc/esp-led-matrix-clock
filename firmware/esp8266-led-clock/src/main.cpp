@@ -1,20 +1,20 @@
 #include <Arduino.h>
 #include <SPI.h>
 
-#include "TimeSource.h"
-#if defined(WIFI_SSID) && defined(WIFI_PASS)
-TimeSource timeSource;
-#else
-#include <WiFiManager.h>
-WiFiManager wm;
-TimeSource timeSource(&wm);
-#endif
-
 #include <LedMatrix.h>
 LedMatrix matrix(SCREEN_CNT);
 
 #include "renderer/Loader.h"
 Loader loader(&matrix);
+
+#include "TimeSource.h"
+#if defined(WIFI_SSID) && defined(WIFI_PASS)
+TimeSource timeSource(&loader);
+#else
+#include <WiFiManager.h>
+WiFiManager wm;
+TimeSource timeSource(&loader, &wm);
+#endif
 
 #include "renderer/Clock.h"
 Clock _clock(&matrix, &timeSource);
@@ -75,3 +75,5 @@ void loop()
         renderers[i]->display();
     }
 }
+
+// TODO: sync Time every T
