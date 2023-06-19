@@ -31,6 +31,7 @@ Renderer *renderers[] = {
 void setup()
 {
     Serial.begin(SERIAL_BAUD);
+    Serial.setDebugOutput(true);  
 #if ARDUINO_HW_CDC_ON_BOOT
     delay(2000);
 #else
@@ -74,6 +75,8 @@ void loop()
     {
         renderers[i]->display();
     }
+
+    timeSource.loop();
 }
 
 // TODO: sync Time every T

@@ -3,6 +3,17 @@
 #include "Renderer.h"
 #include <Ticker.h>
 
+enum LoaderState : uint8_t
+{
+    CONNECTING,
+    GET_IP,
+    GET_LOCATION,
+    GET_TZ,
+    GET_TIME,
+    READY,
+    INIT
+};
+
 String __loader_string = "";
 
 const String _loader_strings[] = {
@@ -22,21 +33,11 @@ private:
     const unsigned short _maxPosX = SCREEN_CNT * 8 - 1;
 
 public:
-    enum LoaderState : uint8_t {
-        CONNECTING,
-        GET_IP,
-        GET_LOCATION,
-        GET_TZ,
-        GET_TIME,
-        READY,
-        INIT
-    };
-
     unsigned int _dPosX = _maxPosX;
     Loader(LedMatrix *mx) : Renderer(mx){};
 
     void init() override;
-    void setState(Loader::LoaderState);
+    void setState(LoaderState);
     void stop();
 };
 
@@ -51,7 +52,7 @@ void Loader::init()
     __loader_string = _loader_strings[INIT];
 }
 
-void setState(Loader::LoaderState state) {
+void Loader::setState(LoaderState state) {
     __loader_string = _loader_strings[state];
 };
 
