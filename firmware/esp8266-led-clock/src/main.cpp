@@ -78,5 +78,3 @@ void loop()
 
     timeSource.loop();
 }
-
-// TODO: sync Time every T

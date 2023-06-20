@@ -23,7 +23,7 @@
 #define NTP_SERVERS "us.pool.ntp.org", "time.nist.gov", "pool.ntp.org"
 #define NTP_MIN_VALID_EPOCH 1533081600 // August 1st, 2018
 
-#define NTP_UPDATE_EVERY_SEC (10)
+#define NTP_UPDATE_EVERY_SEC (60)
 // 60 * 60 * 2
 
 const String _my_ip_url = "https://api.my-ip.io/ip";
@@ -79,14 +79,12 @@ TimeSource::~TimeSource()
 void __timesource_tick_callback(TimeSource *self)
 {
     self->scheduleSync();
-    self->sync();
 }
 
 void TimeSource::connect()
 {
     _loader->setState(CONNECTING);
 
-    WiFi.mode(WIFI_STA);
 #ifdef ARDUINO_LOLIN_C3_MINI
     WiFi.setTxPower(WIFI_POWER_8_5dBm); // https://github.com/tzapu/WiFiManager/issues/1422
 #endif
@@ -126,7 +124,7 @@ void TimeSource::connect()
 
 void TimeSource::disconnect()
 {
-    WiFi.mode(WIFI_OFF);
+    _wifiManager->disconnect();
 }
 
 void TimeSource::init()
