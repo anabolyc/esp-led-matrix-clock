@@ -1,20 +1,18 @@
 #include <Arduino.h>
 #include <SPI.h>
 
-#include "TimeSource.h"
-#if defined(WIFI_SSID) && defined(WIFI_PASS)
-TimeSource timeSource;
-#else
-#include <WiFiManager.h>
-WiFiManager wm;
-TimeSource timeSource(&wm);
-#endif
-
 #include <LedMatrix.h>
 LedMatrix matrix(SCREEN_CNT);
 
 #include "renderer/Loader.h"
 Loader loader(&matrix);
+
+#include <WiFiManager.h>
+WiFiManager wm;
+bool __config_portal_running = false;
+
+#include "TimeSource.h"
+TimeSource timeSource(&loader, &wm);
 
 #include "renderer/Clock.h"
 Clock _clock(&matrix, &timeSource);
@@ -25,14 +23,32 @@ AutoBrightness Brightness(&matrix, &timeSource);
 #include "renderer/Renderer.h"
 Renderer *renderers[] = {
     &Brightness,
-    &_clock
-};
+    &_clock};
+
+void configPortalCallback(WiFiManager *wm)
+{
+    Serial.printf("Config portal started on %s AP\n", wm->getWiFiHostname().c_str());
+    loader.setText("Connect to " + wm->getWiFiHostname() + " to configure WiFi");
+    __config_portal_running = true;
+}
+
+void saveConfigCallback()
+{
+    Serial.print("Config portal stopped\n");
+    __config_portal_running = false;
+    if (timeSource.sync())
+    {
+        loader.stop();
+        matrix.clear();
+    }
+}
 
 void setup()
 {
     Serial.begin(SERIAL_BAUD);
+    Serial.setDebugOutput(true);
 #if ARDUINO_HW_CDC_ON_BOOT
-    delay(2000);
+    delay(3000);
 #else
     delay(100);
 #endif
@@ -40,10 +56,10 @@ void setup()
     timeSource.init();
     matrix.init();
     matrix.clear();
-    #ifdef SCREEN_INVERT
+#ifdef SCREEN_INVERT
     matrix->invert();
-    #endif
-    
+#endif
+
     loader.init();
 
     for (uint8_t i = 0; i < sizeof(renderers) / sizeof(Renderer *); i++)
@@ -51,27 +67,41 @@ void setup()
         renderers[i]->init();
     }
 
-    WiFi.mode(WIFI_OFF);
-    String ssid = "ESP-" + String((unsigned long)
-#ifdef ESP8266
-        ESP.getChipId()
+#ifdef ARDUINO_LOLIN_C3_MINI
+    // https://github.com/tzapu/WiFiManager/issues/1422
+    Serial.println("Set WIFI_POWER_8_5dBm");
+    WiFi.setTxPower(WIFI_POWER_8_5dBm); 
 #endif
-#ifdef ESP32
-        ESP.getEfuseMac()
-#endif
-    );
-    WiFi.hostname(ssid);
 
-    timeSource.sync();
-    loader.stop();
-    matrix.clear();
-    Serial.println("Setup finished!");
+    // For purposes DEBUG only
+    // wm.resetSettings();
+    
+    wm.setConnectTimeout(10);
+    wm.setConfigPortalBlocking(false);
+#if defined(WIFI_SSID) && defined(WIFI_PASS)
+    wm.preloadWiFi(WIFI_SSID, WIFI_PASS);
+#endif
+    wm.setAPCallback(configPortalCallback);
+    wm.setSaveConfigCallback(saveConfigCallback);
+
+    if (timeSource.sync())
+    {
+        loader.stop();
+        matrix.clear();
+    }
 }
 
 void loop()
 {
-    for (uint8_t i = 0; i < sizeof(renderers) / sizeof(Renderer *); i++)
+    if (__config_portal_running) {
+        wm.process();
+    }
+    else
     {
-        renderers[i]->display();
+        for (uint8_t i = 0; i < sizeof(renderers) / sizeof(Renderer *); i++)
+        {
+            renderers[i]->display();
+        }
+        timeSource.loop();
     }
 }
