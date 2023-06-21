@@ -221,7 +221,7 @@ void Clock::display()
         else
             mx->char2Arr_t(48 + sec2, _zPosX - 36, 0);
 
-        mx->char2Arr_t(tm.tm_sec % 2 == 0 ? ':' : ';', _zPosX - 32, 0);
+        mx->char2Arr_t(':', _zPosX - 32, 0);
 #endif
 
         if (sc3 == 1)
@@ -244,7 +244,7 @@ void Clock::display()
         else
             mx->char2Arr_t(48 + min2, _zPosX - 19, 0);
 
-        mx->char2Arr_t(tm.tm_sec % 2 == 0 ? ':' : ';', _zPosX - 15 + x, 0);
+        mx->char2Arr_t(':', _zPosX - 15 + x, 0);
 
         if (sc5 == 1)
         {

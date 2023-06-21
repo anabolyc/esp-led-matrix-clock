@@ -1,20 +1,20 @@
 #include <Arduino.h>
 #include <SPI.h>
 
+#include "TimeSource.h"
+#if defined(WIFI_SSID) && defined(WIFI_PASS)
+TimeSource timeSource;
+#else
+#include <WiFiManager.h>
+WiFiManager wm;
+TimeSource timeSource(&wm);
+#endif
+
 #include <LedMatrix.h>
 LedMatrix matrix(SCREEN_CNT);
 
 #include "renderer/Loader.h"
 Loader loader(&matrix);
-
-#include "TimeSource.h"
-#if defined(WIFI_SSID) && defined(WIFI_PASS)
-TimeSource timeSource(&loader);
-#else
-#include <WiFiManager.h>
-WiFiManager wm;
-TimeSource timeSource(&loader, &wm);
-#endif
 
 #include "renderer/Clock.h"
 Clock _clock(&matrix, &timeSource);
@@ -31,7 +31,6 @@ Renderer *renderers[] = {
 void setup()
 {
     Serial.begin(SERIAL_BAUD);
-    Serial.setDebugOutput(true);  
 #if ARDUINO_HW_CDC_ON_BOOT
     delay(2000);
 #else
@@ -75,6 +74,4 @@ void loop()
     {
         renderers[i]->display();
     }
-
-    timeSource.loop();
 }
