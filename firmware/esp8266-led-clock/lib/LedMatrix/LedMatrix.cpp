@@ -157,7 +157,7 @@ uint8_t LedMatrix::char2Arr_t(unsigned short ch, int PosX, short PosY)
     int i, j, k, l, m, o1, o2, o3, o4 = 0;
     PosX++;
     k = ch - 0x30; // ASCII position in font
-    if ((k >= 0) && (k < 11))
+    if ((k >= 0) && (k < 12))
     {                      // character found in font?
         o4 = font_t[k][0]; // character width
         o3 = 1 << (o4 - 1);

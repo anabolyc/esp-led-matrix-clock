@@ -3,7 +3,28 @@
 #include "Renderer.h"
 #include <Ticker.h>
 
-const String __loader_string = "Loading...";
+enum LoaderState : uint8_t
+{
+    CONNECTING,
+    GET_IP,
+    GET_LOCATION,
+    GET_TZ,
+    GET_TIME,
+    READY,
+    INIT
+};
+
+String __loader_string = "";
+
+const String _loader_strings[] = {
+    "Connecting",
+    "Get my IP",
+    "Find location",
+    "Time zone",
+    "Get time",
+    "Ready",
+    "Initializing"
+};
 
 class Loader : public Renderer
 {
@@ -16,6 +37,7 @@ public:
     Loader(LedMatrix *mx) : Renderer(mx){};
 
     void init() override;
+    void setState(LoaderState);
     void stop();
 };
 
@@ -27,7 +49,12 @@ void __loader_tick_callback(Loader* self) {
 void Loader::init()
 {
     tick.attach_ms(200, __loader_tick_callback, this);
+    __loader_string = _loader_strings[INIT];
 }
+
+void Loader::setState(LoaderState state) {
+    __loader_string = _loader_strings[state];
+};
 
 void Loader::stop()
 {
