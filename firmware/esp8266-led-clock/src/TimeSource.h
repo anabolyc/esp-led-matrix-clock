@@ -23,8 +23,7 @@
 #define NTP_SERVERS "us.pool.ntp.org", "time.nist.gov", "pool.ntp.org"
 #define NTP_MIN_VALID_EPOCH 1533081600 // August 1st, 2018
 
-#define NTP_UPDATE_EVERY_SEC (60)
-// 60 * 60 * 2
+#define NTP_UPDATE_EVERY_SEC (60 * 60 * 2) // Every 2 hrs
 
 const String _my_ip_url = "https://api.my-ip.io/ip";
 const String _my_timezone_url = "http://ip-api.com/line/?fields=timezone";
@@ -42,20 +41,21 @@ private:
     WiFiClient _client;
     bool _sync_scheduled = false;
 
-    void connect();
+    bool connect();
     void disconnect();
     bool getUrl(const String, String &);
 
 public:
-    TimeSource(Loader *loader) : _loader(loader), _wifiManager(nullptr){};
     TimeSource(Loader *loader, WiFiManager *wm) : _loader(loader), _wifiManager(wm){};
     ~TimeSource();
 
     void scheduleSync() { _sync_scheduled = true; };
     void init();
-    void sync();
-    void loop(){
-        if (_sync_scheduled) {
+    bool sync();
+    void loop()
+    {
+        if (_sync_scheduled)
+        {
             sync();
             _sync_scheduled = false;
         }
@@ -81,45 +81,20 @@ void __timesource_tick_callback(TimeSource *self)
     self->scheduleSync();
 }
 
-void TimeSource::connect()
+bool TimeSource::connect()
 {
     _loader->setState(CONNECTING);
 
-#ifdef ARDUINO_LOLIN_C3_MINI
-    WiFi.setTxPower(WIFI_POWER_8_5dBm); // https://github.com/tzapu/WiFiManager/issues/1422
-#endif
-
-    if (!_wifiManager)
+    if (_wifiManager->autoConnect())
     {
-        uint8_t cnt = 0;
-#if defined(WIFI_SSID) && defined(WIFI_PASS)
-        WiFi.begin(WIFI_SSID, WIFI_PASS);
-#endif
-        while (WiFi.status() != WL_CONNECTED)
-        {
-            delay(500);
-            Serial.print(".");
-            cnt++;
-            if (cnt > 20)
-                break;
-        }
-
-        if (WiFi.status() != WL_CONNECTED)
-            return;
+        Serial.println("\nConnected with: " + WiFi.SSID());
+        Serial.println("Private IP Address: " + WiFi.localIP().toString());
+        return true;
     }
-    else if (!_wifiManager->autoConnect())
     {
-        Serial.println("Failed to connect and hit timeout");
-#ifdef ESP8266
-        ESP.reset();
-#endif
-#ifdef ESP32
-        ESP.restart();
-#endif
+        Serial.println("Failed to connect");
+        return false;
     }
-
-    Serial.println("\nConnected with: " + WiFi.SSID());
-    Serial.println("Private IP Address: " + WiFi.localIP().toString());
 }
 
 void TimeSource::disconnect()
@@ -185,9 +160,10 @@ bool TimeSource::getUrl(const String url, String &result)
     return true;
 }
 
-void TimeSource::sync()
+bool TimeSource::sync()
 {
-    connect();
+    if (!connect())
+        return false;
 
     // _loader->setState(GET_IP);
     // String ip = "";
@@ -221,4 +197,5 @@ void TimeSource::sync()
     Serial.printf("UTC time:   %s", asctime(gmtime(&now)));    // print formated GMT/UTC time
 
     disconnect();
+    return true;
 }

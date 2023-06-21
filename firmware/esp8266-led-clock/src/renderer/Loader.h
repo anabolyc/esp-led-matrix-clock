@@ -30,19 +30,19 @@ class Loader : public Renderer
 {
 private:
     Ticker tick;
-    const unsigned short _maxPosX = SCREEN_CNT * 8 - 1;
-
 public:
+    const unsigned short _maxPosX = SCREEN_CNT * 8 - 1;
     unsigned int _dPosX = _maxPosX;
     Loader(LedMatrix *mx) : Renderer(mx){};
 
     void init() override;
     void setState(LoaderState);
+    void setText(String s) { __loader_string = s; _dPosX = _maxPosX; }
     void stop();
 };
 
 void __loader_tick_callback(Loader* self) {
-    self->mx->scrollText(self->_dPosX++, __loader_string);
+    self->mx->scrollText((self->_dPosX++) % (self->_maxPosX + __loader_string.length() * 8), __loader_string);
     self->mx->apply();
 }
 
@@ -54,6 +54,7 @@ void Loader::init()
 
 void Loader::setState(LoaderState state) {
     __loader_string = _loader_strings[state];
+    _dPosX = _maxPosX;
 };
 
 void Loader::stop()

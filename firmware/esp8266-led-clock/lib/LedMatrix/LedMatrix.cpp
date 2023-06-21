@@ -38,7 +38,11 @@ void LedMatrix::init()
         }
     }
 
+    #if defined(PIN_SPI_CLK) && defined(PIN_SPI_MISO) && defined(PIN_SPI_MOSI)
+    SPI.begin(PIN_SPI_CLK, PIN_SPI_MISO, PIN_SPI_MOSI);
+    #else
     SPI.begin();
+    #endif
 
     for (uint8_t i = 0; i < init_seq_length; i++)
     {
