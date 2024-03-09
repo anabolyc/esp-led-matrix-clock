@@ -178,6 +178,7 @@ bool TimeSource::sync()
 
     _loader->setState(GET_TZ);
 
+    #ifndef TZ_OFFSET
     String response = "";
     if (getUrl(_my_json_url, response))
     {
@@ -212,6 +213,11 @@ bool TimeSource::sync()
 
     Serial.printf("Timezone offset: %d\n", settings.tz_offset);
     configTime(settings.tz_offset, 0, NTP_SERVERS);
+    #else
+    Serial.printf("Timezone offset (hardwired): %d\n", TZ_OFFSET);
+    configTime(TZ_OFFSET, 0, NTP_SERVERS);
+    #endif
+    
 
     _loader->setState(GET_TIME);
     Serial.print("Requesting current time...");
