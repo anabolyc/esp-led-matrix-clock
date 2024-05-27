@@ -1,0 +1,167 @@
+substitutions:
+  name: esphome-web-50adc0
+  friendly_name: led-matrix-clock-01
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  name_add_mac_suffix: false
+  project:
+    name: esphome.web
+    version: '1.0'
+
+esp8266:
+  board: esp01_1m
+
+# Enable logging
+logger:
+  level: DEBUG
+
+# Enable Home Assistant API
+api:
+
+# Allow Over-The-Air updates
+ota:
+  password: !secret esphome_ota_password
+
+wifi:
+  ssid: !secret esphome_wifi_ssid
+  password: !secret esphome_wifi_password
+  ap:
+    ssid: "$name Hotspot"
+    password: !secret esphome_ap_password
+
+captive_portal:
+
+time:
+  - platform: sntp
+    id: esptime
+
+font:
+  - file: fonts/pixelmix.ttf
+    id: digit_font
+    size: 8
+    glyphs: 
+      ['&', '@', '!', ',', '.', '"', '%', '(', ')', '+', '-', '_', ':', '°', '0',
+       '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E',
+       'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
+       'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ' ', 'a', 'b', 'c', 'd', 'e', 'f',
+       'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
+       'u', 'v', 'w', 'x', 'y', 'z','å', 'ä', 'ö', '/','º','µ','³']
+
+  - file: 'fonts/materialdesignicons-webfont.ttf'
+    id: font_mdi
+    size: 10
+    glyphs: &mdi-weather-glyphs
+      - "\U000F0590" # mdi-weather-cloudy
+      - "\U000F0F2F" # mdi-weather-cloudy-alert
+      - "\U000F0E6E" # mdi-weather-cloudy-arrow-right
+      - "\U000F0591" # mdi-weather-fog
+      - "\U000F0592" # mdi-weather-hail
+      - "\U000F0F30" # mdi-weather-hazy
+      - "\U000F0898" # mdi-weather-hurricane
+      - "\U000F0593" # mdi-weather-lightning
+      - "\U000F067E" # mdi-weather-lightning-rainy
+      - "\U000F0594" # mdi-weather-night
+      - "\U000F0F31" # mdi-weather-night-partly-cloudy
+      - "\U000F0595" # mdi-weather-partly-cloudy
+      - "\U000F0F32" # mdi-weather-partly-lightning
+      - "\U000F0F33" # mdi-weather-partly-rainy
+      - "\U000F0F34" # mdi-weather-partly-snowy
+      - "\U000F0F35" # mdi-weather-partly-snowy-rainy
+      - "\U000F0596" # mdi-weather-pouring
+      - "\U000F0597" # mdi-weather-rainy
+      - "\U000F0598" # mdi-weather-snowy
+      - "\U000F0F36" # mdi-weather-snowy-heavy
+      - "\U000F067F" # mdi-weather-snowy-rainy
+      - "\U000F0599" # mdi-weather-sunny
+      - "\U000F0F37" # mdi-weather-sunny-alert
+      - "\U000F14E4" # mdi-weather-sunny-off
+      - "\U000F059A" # mdi-weather-sunset
+      - "\U000F059B" # mdi-weather-sunset-down
+      - "\U000F059C" # mdi-weather-sunset-up
+      - "\U000F0F38" # mdi-weather-tornado
+      - "\U000F059D" # mdi-weather-windy
+      - "\U000F059E" # mdi-weather-windy-variant
+      - "\U000F050F" # mdi-themometer
+      - "\U000F058E" # mdi-water-percent
+      - "\U000F04C5" # mdi-speedometer
+      - "\U000F0E0A" # mdi-water
+
+sensor:
+  - platform: homeassistant
+    entity_id: weather.forecast_home
+    id: temperature
+    attribute: temperature
+
+text_sensor:
+  - platform: homeassistant
+    entity_id: weather.forecast_home
+    id: weather
+
+  - platform: homeassistant
+    entity_id: weather.forecast_home
+    id: temperature_unit
+    attribute: temperature_unit
+
+spi:
+  clk_pin: GPIO14
+  mosi_pin: GPIO13
+
+display:
+  - platform: max7219digit
+    id: led_display
+    cs_pin: GPIO15
+    num_chips: 4
+    intensity: 15
+    update_interval: 1s
+    lambda: |-
+
+      std::map<std::string, std::string> weather_icon_map
+      {
+        {"cloudy", "\U000F0590"},
+        {"cloudy-alert", "\U000F0F2F"},
+        {"cloudy-arrow-right", "\U000F0E6E"},
+        {"fog", "\U000F0591"},
+        {"hail", "\U000F0592"},
+        {"hazy", "\U000F0F30"},
+        {"hurricane", "\U000F0898"},
+        {"lightning", "\U000F0593"},
+        {"lightning-rainy", "\U000F067E"},
+        {"night", "\U000F0594"},
+        {"night-partly-cloudy", "\U000F0F31"},
+        {"partlycloudy", "\U000F0595"},
+        {"partly-lightning", "\U000F0F32"},
+        {"partly-rainy", "\U000F0F33"},
+        {"partly-snowy", "\U000F0F34"},
+        {"partly-snowy-rainy", "\U000F0F35"},
+        {"pouring", "\U000F0596"},
+        {"rainy", "\U000F0597"},
+        {"snowy", "\U000F0598"},
+        {"snowy-heavy", "\U000F0F36"},
+        {"snowy-rainy", "\U000F067F"},
+        {"sunny", "\U000F0599"},
+        {"sunny-alert", "\U000F0F37"},
+        {"sunny-off", "\U000F14E4"},
+        {"sunset", "\U000F059A"},
+        {"sunset-down", "\U000F059B"},
+        {"sunset-up", "\U000F059C"},
+        {"tornado", "\U000F0F38"},
+        {"windy", "\U000F059D"},
+        {"windy-variant", "\U000F059E"},
+      };
+      
+      auto seconds = id(esptime).now().second;
+      if ((seconds < 25) || (seconds >= 30 && seconds < 55)) {
+        auto timestring = id(esptime).now().strftime("%H %M");
+        it.printf(16, 0, id(digit_font), Color::WHITE, TextAlign::TOP_CENTER, "%s", timestring.c_str());
+        if (seconds % 2 == 0) {
+          it.print(16, 0, id(digit_font), Color::WHITE, TextAlign::TOP_CENTER, ":");
+        }
+      } else if (seconds < 35) {
+        auto datestring = id(esptime).now().strftime("%d %b");
+        it.printf(16, 0, id(digit_font), Color::WHITE, TextAlign::TOP_CENTER, "%s", datestring.c_str());
+      } else {
+        it.printf(32, 0, id(digit_font), Color::WHITE, TextAlign::TOP_RIGHT, "%d%s", int(id(temperature).state), id(temperature_unit).state.c_str());
+        it.printf(-1, -1, id(font_mdi), Color::WHITE, TextAlign::TOP_LEFT, "%s", weather_icon_map[id(weather).state.c_str()].c_str());
+      }
